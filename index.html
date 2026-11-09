@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Record, split, join, trim, and export audio. Turn speech into text on your device. Free browser tools, no audio uploads.">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>JustTools / Voice Tools &mdash; Free audio editing in your browser</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="brand">
+      <span class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>
+      </span>
+      <span><a href="https://jlavista.github.io/just-tools/">JustTools</a> / Voice Tools</span>
+      <p class="brand-tagline">100% free, No ads, all happen on the browsers, 100% private, No uploads. No tricks. Just tools.</p>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">A LITTLE ROOM FOR YOUR VOICE</p>
+      <h1>Your sound.<br><span>Your way.</span></h1>
+      <p>Record it. Cut it. Bring it together. Even turn it into text.<br>Your audio never leaves your device.</p>
+    </section>
+    <div class="workspace">
+      <aside class="library" aria-labelledby="library-title">
+        <span class="step">01 / BRING YOUR SOUND</span>
+        <h2 id="library-title">A file. Or your voice.</h2>
+        <input id="files" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.opus,.webm,.flac,.aiff,.aif" multiple hidden>
+        <button id="add" class="drop-zone" type="button" data-lock disabled>
+          <strong>Choose audio files</strong><span>or drop them here</span>
+        </button>
+        <p class="hint">MP3, WAV, M4A, AAC, Ogg, WebM, FLAC, and more, when your browser can decode them. Unsupported files get an explicit error.</p>
+        <div class="record-controls">
+          <button id="record" class="button secondary" type="button" data-lock disabled>Record microphone</button>
+          <button id="stop-record" class="button danger" type="button" disabled>Stop recording</button>
+        </div>
+        <p id="record-status" class="hint" role="status">Microphone permission is requested only when you press Record.</p>
+        <div class="library-heading"><h3>Your clips</h3><button id="clear" class="text-button" type="button" data-lock disabled>Clear all</button></div>
+        <p class="hint">Click a name to edit. Check clips to join them in the order below. Use arrows to reorder.</p>
+        <ol id="clips" class="clips" aria-label="Audio clips"></ol>
+        <button id="join" class="button secondary full" type="button" data-lock disabled>Join checked clips</button>
+        <p id="summary" class="hint">No audio yet.</p>
+        <p class="hint">Audio is edited as 44.1 kHz stereo. Maximum 10 minutes in the workspace and 100 MB per imported file. Keep originals; edits live only in this tab.</p>
+        <div class="privacy">
+          <strong>Private, down to the sound.</strong>
+          <p>No audio uploads, no account, no cloud transcription. Speech models download only when you ask. Reloading clears your clips and text.</p>
+        </div>
+      </aside>
+      <section class="editor" aria-labelledby="editor-title">
+        <div class="section-heading">
+          <div><span class="step">02 / MAKE IT YOURS</span><h2 id="editor-title">A little fine-tuning.</h2></div>
+          <span id="duration" class="badge">NO CLIP SELECTED</span>
+        </div>
+        <div id="empty" class="empty"><h3>Make room for your next idea.</h3><p>Add an audio file or record your voice to get started.</p></div>
+        <div id="edit-area" hidden>
+          <label for="clip-name">Clip name</label>
+          <input id="clip-name" type="text" maxlength="120" data-lock>
+          <canvas id="waveform" height="180" role="img" aria-label="Audio waveform. Use the time fields below to select audio." tabindex="0"></canvas>
+          <p class="hint">Drag across the waveform to select a range, or enter times in seconds below. A click sets the start / split point.</p>
+          <div class="time-fields">
+            <div><label for="start">Start / split point (seconds)</label><input id="start" type="number" min="0" step="0.001" value="0" data-lock></div>
+            <div><label for="end">End (seconds)</label><input id="end" type="number" min="0" step="0.001" value="0" data-lock></div>
+          </div>
+          <div class="toolbar">
+            <button id="play" class="button secondary" type="button" data-lock>Play selection</button>
+            <button id="stop-play" class="button secondary" type="button" disabled>Stop playback</button>
+            <button id="select-all" class="text-button" type="button" data-lock>Select all</button>
+            <span id="play-time" class="hint" aria-live="off"></span>
+          </div>
+          <div class="toolbar edit-actions" aria-label="Audio editing actions">
+            <button id="trim" class="button secondary" type="button" data-lock>Keep selection</button>
+            <button id="cut" class="button secondary" type="button" data-lock>Cut selection</button>
+            <button id="split" class="button secondary" type="button" data-lock>Split at start</button>
+            <button id="duplicate" class="button secondary" type="button" data-lock>Duplicate clip</button>
+            <button id="undo" class="button secondary" type="button" data-lock disabled>Undo</button>
+            <button id="redo" class="button secondary" type="button" data-lock disabled>Redo</button>
+          </div>
+          <details>
+            <summary>More sound tools</summary>
+            <p class="hint">Effects apply only to the selected range. Normalize adjusts its peak to 95%. Gain is limited to avoid clipping.</p>
+            <div class="toolbar">
+              <button id="normalize" class="button secondary" type="button" data-lock>Normalize</button>
+              <button id="reverse" class="button secondary" type="button" data-lock>Reverse</button>
+              <button id="fade-in" class="button secondary" type="button" data-lock>Fade in</button>
+              <button id="fade-out" class="button secondary" type="button" data-lock>Fade out</button>
+              <button id="silence" class="button secondary" type="button" data-lock>Silence</button>
+            </div>
+            <label for="gain">Volume change (dB)</label>
+            <div class="inline"><input id="gain" type="number" min="-40" max="20" step="1" value="3" data-lock><button id="apply-gain" class="button secondary" type="button" data-lock>Apply volume</button></div>
+          </details>
+        </div>
+        <section class="export" aria-labelledby="export-title">
+          <span class="step">03 / TAKE IT WITH YOU</span>
+          <h2 id="export-title">Ready to go?</h2>
+          <div class="export-fields">
+            <div><label for="format">Audio format</label><select id="format" data-lock><option value="wav">WAV (lossless PCM)</option><option value="mp3">MP3 (192 kbps)</option></select></div>
+            <div><label for="export-scope">What to save</label><select id="export-scope" data-lock><option value="clip">Current clip</option><option value="selection">Selected range</option></select></div>
+          </div>
+          <button id="download" class="button primary full" type="button" data-lock disabled>Download audio &darr;</button>
+          <p id="export-hint" class="hint">MP3 and WAV encode locally. Additional formats appear when your browser can encode them; those exports run in real time (a 2-minute clip takes about 2 minutes).</p>
+        </section>
+        <section class="transcription" aria-labelledby="text-title">
+          <div class="section-heading"><div><span class="step">04 / GIVE IT WORDS</span><h2 id="text-title">Voice to text.</h2></div><span class="badge">ON YOUR DEVICE</span></div>
+          <p class="description">Multilingual Whisper runs here, not on a server. First use downloads roughly 75 MB of model files from Hugging Face, cached by your browser when possible. Download hosts see ordinary network information, never your audio. Transcription can be slow and inaccurate; review the result.</p>
+          <div class="export-fields">
+            <div><label for="language">Spoken language</label><select id="language" data-lock><option value="">Detect automatically</option><option value="english">English</option><option value="spanish">Spanish</option><option value="french">French</option><option value="german">German</option><option value="italian">Italian</option><option value="portuguese">Portuguese</option><option value="dutch">Dutch</option><option value="chinese">Chinese</option><option value="japanese">Japanese</option><option value="korean">Korean</option><option value="arabic">Arabic</option><option value="hindi">Hindi</option></select></div>
+            <div><label for="text-scope">What to transcribe</label><select id="text-scope" data-lock><option value="clip">Current clip</option><option value="selection">Selected range</option></select></div>
+          </div>
+          <label class="check"><input id="model-consent" type="checkbox" data-lock> Allow the speech model download. My audio stays on this device.</label>
+          <div class="toolbar">
+            <button id="transcribe" class="button primary" type="button" data-lock disabled>Extract text</button>
+            <button id="cancel" class="button danger" type="button" disabled>Cancel task</button>
+          </div>
+          <p id="text-source" class="hint">Text is not saved anywhere automatically.</p>
+          <label for="text">Extracted text (editable)</label>
+          <textarea id="text" rows="7" placeholder="Your words will appear here. Correct any mistakes before copying or saving." data-lock></textarea>
+          <div class="toolbar">
+            <button id="copy-text" class="button secondary" type="button" data-lock disabled>Copy text</button>
+            <button id="save-text" class="button secondary" type="button" data-lock disabled>Download .txt</button>
+            <button id="forget-model" class="text-button" type="button" data-lock>Remove cached speech model</button>
+          </div>
+        </section>
+      </section>
+    </div>
+    <div class="feedback">
+      <p id="status" role="status" aria-live="polite">Loading audio tools...</p>
+      <progress id="progress" max="100" value="0" aria-label="Current task progress" hidden></progress>
+      <p id="error" class="error" role="alert" hidden></p>
+    </div>
+    <footer>
+      No tricks. Just tools.
+      <a href="https://github.com/jlavista/voice-tools" target="_blank" rel="noopener noreferrer">100% open source, click here to get to github repository</a>
+      <p class="analytics-note">Cookie-free traffic analytics by <a href="https://developers.cloudflare.com/web-analytics/" target="_blank" rel="noopener noreferrer">Cloudflare</a>. Audio and transcribed text are not sent.</p>
+    </footer>
+    <noscript><p class="error">Please enable JavaScript to use Voice Tools. Audio is processed on your device.</p></noscript>
+  </main>
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"811c6903ca1b4381938fb473ebfc8082"}'></script>
+</body>
+</html>
