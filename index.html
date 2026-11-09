@@ -104,9 +104,9 @@
         </section>
         <section class="transcription" aria-labelledby="text-title">
           <div class="section-heading"><div><span class="step">04 / GIVE IT WORDS</span><h2 id="text-title">Voice to text.</h2></div><span class="badge">ON YOUR DEVICE</span></div>
-          <p class="description">Multilingual Whisper runs here, not on a server. First use downloads roughly 75 MB of model files from Hugging Face, cached by your browser when possible. Download hosts see ordinary network information, never your audio. Transcription can be slow and inaccurate; review the result.</p>
+          <p class="description">Whisper runs here, not on a server. English uses base.en (roughly 77 MB of model weights); other languages and automatic detection use multilingual tiny (roughly 41 MB). Each model downloads from Hugging Face only when needed, plus small tokenizer files, and is cached by your browser when possible. Download hosts see ordinary network information, never your audio. Transcription can be slow and inaccurate; review the result.</p>
           <div class="export-fields">
-            <div><label for="language">Spoken language</label><select id="language" data-lock><option value="">Detect automatically</option><option value="english">English</option><option value="spanish">Spanish</option><option value="french">French</option><option value="german">German</option><option value="italian">Italian</option><option value="portuguese">Portuguese</option><option value="dutch">Dutch</option><option value="chinese">Chinese</option><option value="japanese">Japanese</option><option value="korean">Korean</option><option value="arabic">Arabic</option><option value="hindi">Hindi</option></select></div>
+            <div><label for="language">Spoken language</label><select id="language" data-lock><option value="">Detect automatically (multilingual)</option><option value="english" selected>English (base.en)</option><option value="spanish">Spanish</option><option value="french">French</option><option value="german">German</option><option value="italian">Italian</option><option value="portuguese">Portuguese</option><option value="dutch">Dutch</option><option value="chinese">Chinese</option><option value="japanese">Japanese</option><option value="korean">Korean</option><option value="arabic">Arabic</option><option value="hindi">Hindi</option></select></div>
             <div><label for="text-scope">What to transcribe</label><select id="text-scope" data-lock><option value="clip">Current clip</option><option value="selection">Selected range</option></select></div>
           </div>
           <label class="check"><input id="model-consent" type="checkbox" data-lock> Allow the speech model download. My audio stays on this device.</label>
@@ -120,7 +120,7 @@
           <div class="toolbar">
             <button id="copy-text" class="button secondary" type="button" data-lock disabled>Copy text</button>
             <button id="save-text" class="button secondary" type="button" data-lock disabled>Download .txt</button>
-            <button id="forget-model" class="text-button" type="button" data-lock>Remove cached speech model</button>
+            <button id="forget-model" class="text-button" type="button" data-lock>Remove cached speech models</button>
           </div>
         </section>
       </section>

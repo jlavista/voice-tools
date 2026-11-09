@@ -284,7 +284,20 @@ class VoiceToolsTests(unittest.TestCase):
         self.assertTrue(self.page.evaluate("document.documentElement.scrollWidth <= innerWidth"))
         self.assertTrue(self.page.locator("#download").is_visible())
 
-    @unittest.skipUnless(os.environ.get("VOICE_TEST_SPEECH"), "Set VOICE_TEST_SPEECH for actual multilingual model inference")
+    def test_cache_cleanup_preserves_unrelated_models(self):
+        self.page.evaluate("""async () => {
+          const cache = await caches.open('transformers-cache');
+          for (const model of ['whisper-base.en', 'whisper-tiny', 'unrelated-model'])
+            await cache.put(`https://huggingface.co/Xenova/${model}/resolve/main/config.json`, new Response('{}'));
+        }""")
+        self.page.locator("#forget-model").click()
+        self.ready()
+        paths = self.page.evaluate("""async () =>
+          (await (await caches.open('transformers-cache')).keys()).map(request => new URL(request.url).pathname)
+        """)
+        self.assertEqual(paths, ["/Xenova/unrelated-model/resolve/main/config.json"])
+
+    @unittest.skipUnless(os.environ.get("VOICE_TEST_SPEECH"), "Set VOICE_TEST_SPEECH for actual English model inference")
     def test_real_speech_recognition(self):
         self.page.locator("#files").set_input_files(os.environ["VOICE_TEST_SPEECH"])
         self.ready()
@@ -296,6 +309,30 @@ class VoiceToolsTests(unittest.TestCase):
         text = self.page.locator("#text").input_value().lower()
         self.assertIn("hello", text)
         self.assertIn("world", text)
+        self.assertTrue(any("/Xenova/whisper-base.en/" in request.url for request in self.requests))
+        self.assertFalse(any("/Xenova/whisper-tiny/" in request.url for request in self.requests))
+        self.assertFalse(any(request.method != "GET" for request in self.requests))
+
+    @unittest.skipUnless(os.environ.get("VOICE_TEST_SPEECH") and os.environ.get("VOICE_TEST_SPANISH"),
+                         "Set English and Spanish fixtures to verify model switching")
+    def test_switching_speech_models(self):
+        self.page.locator("#model-consent").check()
+        for language, fixture_env, expected, model in [
+            ("english", "VOICE_TEST_SPEECH", "world", "whisper-base.en"),
+            ("spanish", "VOICE_TEST_SPANISH", "mundo", "whisper-tiny"),
+            ("", "VOICE_TEST_SPANISH", "mundo", "whisper-tiny"),
+            ("english", "VOICE_TEST_SPEECH", "world", "whisper-base.en"),
+        ]:
+            first_request = len(self.requests)
+            self.page.locator("#files").set_input_files(os.environ[fixture_env])
+            self.ready()
+            self.page.locator("#language").select_option(language)
+            self.page.locator("#transcribe").click()
+            self.page.wait_for_function("document.querySelector('#progress').hidden", timeout=600000)
+            self.assertTrue(self.page.locator("#error").is_hidden(), self.page.locator("#error").text_content())
+            self.assertIn(expected, self.page.locator("#text").input_value().lower())
+            wrong_model = "whisper-tiny" if model == "whisper-base.en" else "whisper-base.en"
+            self.assertFalse(any(f"/Xenova/{wrong_model}/" in request.url for request in self.requests[first_request:]))
         self.assertFalse(any(request.method != "GET" for request in self.requests))
 
 

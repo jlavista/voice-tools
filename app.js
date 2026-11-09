@@ -581,17 +581,18 @@ $("copy-text").addEventListener("click", () => runTask("Copying text...", async 
   try { await navigator.clipboard.writeText($("text").value); status("Text copied."); }
   catch { throw new Error("Clipboard permission was denied. Select and copy the text manually, or download it."); }
 }));
-$("forget-model").addEventListener("click", () => runTask("Removing this tool's cached speech model...", async () => {
+$("forget-model").addEventListener("click", () => runTask("Removing this tool's cached speech models...", async () => {
   speechWorker?.terminate(); speechWorker = null;
   if (!window.caches) throw new Error("Browser cache controls are unavailable here. Use your browser's site-data settings.");
   const cache = await caches.open("transformers-cache");
   let removed = 0;
   for (const request of await cache.keys()) {
-    if (new URL(request.url).pathname.includes("/Xenova/whisper-tiny/")) {
+    const path = new URL(request.url).pathname;
+    if (path.includes("/Xenova/whisper-tiny/") || path.includes("/Xenova/whisper-base.en/")) {
       if (await cache.delete(request)) removed++;
     }
   }
-  status(removed ? "Cached speech model removed. Next transcription will download it again." : "No cached speech model was found. Browser-managed HTTP caches can be cleared in site-data settings.");
+  status(removed ? "Cached speech models removed. Next transcription will download the selected model again." : "No cached speech models were found. Browser-managed HTTP caches can be cleared in site-data settings.");
 }));
 window.addEventListener("pagehide", () => {
   stopPlayback(); state.task?.cancel?.(); speechWorker?.terminate();

@@ -15,14 +15,16 @@ Record, edit, export, and transcribe audio in the browser. Static HTML, CSS, Jav
 - Undo/redo the last five changes. Operations are non-destructive to imported files.
 - Export the current clip or range as 16-bit PCM WAV or 192 kbps MP3.
 - Export WebM/Opus, Ogg/Opus, or M4A/AAC **only when the browser reports encoder support**. These exports run in real time without speaker playback. Keep the tab open.
-- Multilingual voice-to-text with Whisper tiny, automatic language detection or explicit language selection, editable output, copy, and UTF-8 text download.
+- Voice-to-text with Whisper base.en for English (the default), and multilingual Whisper tiny for other languages or automatic detection, editable output, copy, and UTF-8 text download.
 - Cancel lengthy encoding, model loading, or speech recognition. Remove this tool's cached speech-model files.
 
 ## Privacy and downloads
 
 All decoding, editing, encoding, recording, and speech inference happen on the device. Audio and transcript contents are not sent to any server, stored automatically, or added to analytics. Reloading clears the workspace.
 
-After the user checks the download permission and presses Extract text, Transformers.js retrieves the quantized `Xenova/whisper-tiny` model from Hugging Face. Model weights are roughly 75 MB, plus small configuration/tokenizer files. The revision is pinned in `speech-worker.js`. Model requests can redirect to Hugging Face's CDN. These hosts receive normal HTTP request metadata, not audio. The model is cached with the browser Cache API when available; browsers may evict it. Network access is needed if files are not cached.
+After the user checks the download permission and presses Extract text, Transformers.js retrieves the selected quantized model from Hugging Face: `Xenova/whisper-base.en` for explicitly selected English (roughly 77 MB of weights), or `Xenova/whisper-tiny` for other languages and automatic detection (roughly 41 MB). Both need additional small configuration/tokenizer files. Revisions are pinned in `speech-worker.js`. English is selected by default; choose English to use base.en even when automatic detection would recognize English. Changing model releases the previous model's inference sessions rather than keeping both in memory. Cache cleanup removes both models, leaving unrelated entries alone.
+
+Model requests can redirect to Hugging Face's CDN. These hosts receive normal HTTP request metadata, not audio. Models are cached with the browser Cache API when available; browsers may evict them. Network access is needed if files are not cached.
 
 JavaScript audio encoders, Transformers.js, and the ONNX CPU WebAssembly runtime are vendored and served with the site. No remote speech service or browser `SpeechRecognition` API is used.
 
@@ -48,7 +50,7 @@ Audio is downmixed to stereo and resampled to 44.1 kHz before editing. Speech re
 
 The workspace is limited to ten minutes of decoded audio, with a 100 MB limit per imported file. Decoded audio, undo history, and speech models consume substantially more memory than compressed input. Low-memory phones may struggle; use short recordings and keep originals. Effects apply to the selected range, while joins concatenate (not mix) clips. Undo does not restore text.
 
-Whisper tiny trades accuracy for a smaller browser download. Language quality varies; noise, overlapping speakers, music, and silence can cause incorrect or invented words. Results are not reliable for high-stakes decisions. Transcription is slower on older devices. Cancellation stops the speech worker, but previously downloaded model files may remain cached.
+Whisper base.en improves English recognition over the multilingual tiny model, at the cost of a larger download and slower processing. Other languages still use tiny, which trades accuracy for a smaller browser download. Language quality varies; noise, overlapping speakers, music, and silence can cause incorrect or invented words. Results are not reliable for high-stakes decisions. Transcription is slower on older devices. Cancellation stops the speech worker, but previously downloaded model files may remain cached.
 
 ## Tests
 
@@ -59,7 +61,7 @@ python -m pip install playwright imageio-ffmpeg
 python -m unittest discover -s tests -v
 ```
 
-The suite uses the installed Microsoft Edge on Windows. Set `VOICE_TEST_BROWSER` to another Chromium executable if needed. It uses fake microphone input and mocks clipboard calls, never the user's real microphone or clipboard. Set `VOICE_TEST_SPEECH` to a synthetic spoken WAV fixture to additionally run real model-download/inference verification.
+The suite uses the installed Microsoft Edge on Windows. Set `VOICE_TEST_BROWSER` to another Chromium executable if needed. It uses fake microphone input and mocks clipboard calls, never the user's real microphone or clipboard. Set `VOICE_TEST_SPEECH` to a synthetic English spoken WAV fixture to additionally run real model-download/inference verification. Also set `VOICE_TEST_SPANISH` to a synthetic Spanish fixture to verify switching between English and multilingual models.
 
 ## Open source
 
@@ -70,6 +72,6 @@ Application code is MIT licensed. Unmodified vendored libraries retain their own
 | lamejs (LAME-based MP3 encoder) | 1.2.1 | LGPL-3.0; https://github.com/zhuker/lamejs and https://lame.sourceforge.net/ |
 | Transformers.js | 3.8.1 | Apache-2.0; https://github.com/huggingface/transformers.js |
 | ONNX Runtime Web | 1.22.0-dev.20250409-89f8206ba4 | MIT; https://github.com/microsoft/onnxruntime |
-| Whisper tiny model, downloaded on demand | pinned ONNX revision | Apache-2.0; https://huggingface.co/Xenova/whisper-tiny and https://huggingface.co/openai/whisper-tiny |
+| Whisper base.en and tiny models, downloaded on demand | pinned ONNX revisions | Apache-2.0; https://huggingface.co/Xenova/whisper-base.en and https://huggingface.co/Xenova/whisper-tiny |
 
 License notices are included under `vendor`. The MP3 encoder remains a separate, unmodified script; its matching [upstream release source archive](vendor/lame/source.tgz) is bundled alongside it. The archive's encoder was verified byte-for-byte against the distributed script. Source is also available from [the exact npm release](https://www.npmjs.com/package/lamejs/v/1.2.1) and [upstream](https://github.com/zhuker/lamejs/tree/1.2.1).
